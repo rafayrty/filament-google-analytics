@@ -12,29 +12,37 @@ trait Visitors
 
     private function visitorsToday(): array
     {
-        $analyticsData = Analytics::fetchTotalVisitorsAndPageViews(Period::days(1));
+        $analyticsData = $this->get(
+            metrics: ['activeUsers', 'screenPageViews'],
+            dimensions: isset($this->pagePath) && !is_null($this->pagePath) ? ['pagePath', 'date'] : ['date'],
+            period: Period::days(1),
+        );
 
         return [
-            'result' => $analyticsData[0]['activeUsers'],
-            'previous' => $analyticsData[1]['activeUsers']
+            'previous' => $analyticsData->first()['activeUsers'] ?? 0,
+            'result' => $analyticsData->last()['activeUsers'] ?? 0,
         ];
     }
 
     private function visitorsYesterday(): array
     {
-        $analyticsData = Analytics::fetchTotalVisitorsAndPageViews(Period::create(Carbon::yesterday()->clone()->subDay(), Carbon::yesterday()));
+        $analyticsData = $this->get(
+            metrics: ['activeUsers', 'screenPageViews'],
+            dimensions: isset($this->pagePath) && !is_null($this->pagePath) ? ['pagePath', 'date'] : ['date'],
+            period: Period::create(Carbon::yesterday()->clone()->subDay(), Carbon::yesterday()),
+        );
 
         return [
-            'result' => $analyticsData[0]['activeUsers'],
-            'previous' => $analyticsData[1]['activeUsers']
+            'previous' => $analyticsData->first()['activeUsers'] ?? 0,
+            'result' => $analyticsData->last()['activeUsers'] ?? 0,
         ];
     }
 
     private function visitorsLastWeek(): array
     {
         $lastWeek = $this->getLastWeek();
-        $currentResults = $this->get('activeUsers', 'date', $lastWeek['current']);
-        $previousResults = $this->get('activeUsers', 'date', $lastWeek['previous']);
+        $currentResults = $this->get(['activeUsers'], ['date'], $lastWeek['current']);
+        $previousResults = $this->get(['activeUsers'], ['date'], $lastWeek['previous']);
 
         return [
             'previous' => $previousResults->pluck('value')->sum() ?? 0,
@@ -45,8 +53,8 @@ trait Visitors
     private function visitorsLastMonth(): array
     {
         $lastMonth = $this->getLastMonth();
-        $currentResults = $this->get('activeUsers', 'year', $lastMonth['current']);
-        $previousResults = $this->get('activeUsers', 'year', $lastMonth['previous']);
+        $currentResults = $this->get(['activeUsers'], ['year'], $lastMonth['current']);
+        $previousResults = $this->get(['activeUsers'], ['year'], $lastMonth['previous']);
 
         return [
             'previous' => $previousResults->pluck('value')->sum() ?? 0,
@@ -57,8 +65,8 @@ trait Visitors
     private function visitorsLastSevenDays(): array
     {
         $lastSevenDays = $this->getLastSevenDays();
-        $currentResults = $this->get('activeUsers', 'year', $lastSevenDays['current']);
-        $previousResults = $this->get('activeUsers', 'year', $lastSevenDays['previous']);
+        $currentResults = $this->get(['activeUsers'], ['year'], $lastSevenDays['current']);
+        $previousResults = $this->get(['activeUsers'], ['year'], $lastSevenDays['previous']);
 
         return [
             'previous' => $previousResults->pluck('value')->sum() ?? 0,
@@ -69,8 +77,8 @@ trait Visitors
     private function visitorsLastThirtyDays(): array
     {
         $lastThirtyDays = $this->getLastThirtyDays();
-        $currentResults = $this->get('activeUsers', 'year', $lastThirtyDays['current']);
-        $previousResults = $this->get('activeUsers', 'year', $lastThirtyDays['previous']);
+        $currentResults = $this->get(['activeUsers'], ['year'], $lastThirtyDays['current']);
+        $previousResults = $this->get(['activeUsers'], ['year'], $lastThirtyDays['previous']);
 
         return [
             'previous' => $previousResults->pluck('value')->sum() ?? 0,
